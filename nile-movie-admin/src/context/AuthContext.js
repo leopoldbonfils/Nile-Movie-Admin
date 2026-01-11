@@ -48,8 +48,8 @@ export const AuthProvider = ({ children }) => {
       
       console.log('Login response:', response); // Debug log
       
-      // Handle different response structures
-      const userData = response.user || response.data?.user || response;
+      // Handle different response structures (check both 'user' and 'admin' keys)
+      const userData = response.user || response.admin || response.data?.user || response.data?.admin || response;
       const token = response.token || response.data?.token;
       
       if (!userData) {
