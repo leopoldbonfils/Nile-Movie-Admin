@@ -45,11 +45,15 @@ function UploadMovie() {
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
+    console.log('Thumbnail selected:', file); // Debug log
+    
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         setError('Thumbnail must be less than 5MB');
+        e.target.value = ''; // Clear the input
         return;
       }
+      
       setThumbnailFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -62,12 +66,17 @@ function UploadMovie() {
 
   const handleVideoChange = (e) => {
     const file = e.target.files[0];
+    console.log('Video selected:', file); // Debug log
+    
     if (file) {
-      if (file.size > 500 * 1024 * 1024) { // 500MB limit
-        setError('Video must be less than 500MB');
+      if (file.size > 10 * 1024 * 1024 * 1024) { // 10GB limit
+        setError('Video must be less than 10GB');
+        e.target.value = ''; // Clear the input
         return;
       }
+      
       setVideoFile(file);
+      console.log('Video file set:', file.name, file.size); // Debug log
       setError('');
     }
   };
@@ -77,8 +86,14 @@ function UploadMovie() {
     setError('');
     setSuccess('');
 
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Form data:', formData);
+    console.log('Thumbnail file:', thumbnailFile);
+    console.log('Video file:', videoFile);
+
+    // Validate required fields
     if (!formData.title || !formData.description || !formData.director) {
-      setError('Please fill in all required fields');
+      setError('Please fill in all required fields (Title, Description, Director)');
       return;
     }
 
@@ -89,6 +104,7 @@ function UploadMovie() {
 
     if (!videoFile) {
       setError('Please select a video file');
+      console.log('Video file is null or undefined');
       return;
     }
 
@@ -97,27 +113,38 @@ function UploadMovie() {
 
       const data = new FormData();
       
+      // Append form fields
       Object.keys(formData).forEach(key => {
         if (key === 'cast') {
-          data.append(key, JSON.stringify(formData[key].split(',').map(s => s.trim())));
+          const castArray = formData[key].split(',').map(s => s.trim()).filter(s => s);
+          data.append(key, JSON.stringify(castArray));
         } else {
           data.append(key, formData[key]);
         }
       });
 
+      // Append files
       data.append('thumbnail', thumbnailFile);
       data.append('video', videoFile);
 
-      await movieService.uploadMovie(data);
+      console.log('FormData entries:');
+      for (let pair of data.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
+      const response = await movieService.uploadMovie(data);
+      console.log('Upload response:', response);
 
       setSuccess('Movie uploaded successfully!');
+      
+      // Reset form
       setTimeout(() => {
         navigate('/dashboard/movies');
       }, 2000);
 
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err.response?.data?.message || 'Failed to upload movie. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to upload movie. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -145,6 +172,12 @@ function UploadMovie() {
     setThumbnailPreview(null);
     setError('');
     setSuccess('');
+    
+    // Clear file inputs
+    const thumbnailInput = document.getElementById('thumbnail');
+    const videoInput = document.getElementById('video');
+    if (thumbnailInput) thumbnailInput.value = '';
+    if (videoInput) videoInput.value = '';
   };
 
   return (
@@ -184,6 +217,7 @@ function UploadMovie() {
                 placeholder="Enter movie title"
                 required
                 className="form-input"
+                disabled={loading}
               />
             </div>
 
@@ -196,6 +230,7 @@ function UploadMovie() {
                 onChange={handleChange}
                 required
                 className="form-input"
+                disabled={loading}
               >
                 {genres.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
@@ -213,6 +248,7 @@ function UploadMovie() {
               required
               rows="4"
               className="form-textarea"
+              disabled={loading}
             />
           </div>
 
@@ -228,6 +264,7 @@ function UploadMovie() {
                 placeholder="Director name"
                 required
                 className="form-input"
+                disabled={loading}
               />
             </div>
 
@@ -241,6 +278,7 @@ function UploadMovie() {
                 onChange={handleChange}
                 placeholder="Actor 1, Actor 2, Actor 3"
                 className="form-input"
+                disabled={loading}
               />
             </div>
           </div>
@@ -262,6 +300,7 @@ function UploadMovie() {
                 max={new Date().getFullYear() + 5}
                 required
                 className="form-input"
+                disabled={loading}
               />
             </div>
 
@@ -276,6 +315,7 @@ function UploadMovie() {
                 placeholder="2h 15m"
                 required
                 className="form-input"
+                disabled={loading}
               />
             </div>
 
@@ -291,6 +331,7 @@ function UploadMovie() {
                 max="5"
                 step="0.1"
                 className="form-input"
+                disabled={loading}
               />
             </div>
           </div>
@@ -305,6 +346,7 @@ function UploadMovie() {
                 onChange={handleChange}
                 required
                 className="form-input"
+                disabled={loading}
               >
                 {ageRatings.map(rating => <option key={rating} value={rating}>{rating}</option>)}
               </select>
@@ -320,6 +362,7 @@ function UploadMovie() {
                 onChange={handleChange}
                 required
                 className="form-input"
+                disabled={loading}
               />
             </div>
 
@@ -332,6 +375,7 @@ function UploadMovie() {
                 value={formData.releaseDate}
                 onChange={handleChange}
                 className="form-input"
+                disabled={loading}
               />
             </div>
           </div>
@@ -352,6 +396,7 @@ function UploadMovie() {
                 accept="image/*"
                 onChange={handleThumbnailChange}
                 className="file-input"
+                disabled={loading}
               />
               {thumbnailPreview && (
                 <div className="file-preview">
@@ -359,14 +404,14 @@ function UploadMovie() {
                 </div>
               )}
               {thumbnailFile && (
-                <p className="file-info">Selected: {thumbnailFile.name}</p>
+                <p className="file-info">✅ Selected: {thumbnailFile.name}</p>
               )}
             </div>
 
             <div className="form-group file-upload-group">
               <label htmlFor="video">
                 <Film size={20} />
-                Video File * (Max 500MB)
+                Video File * (Max 10GB)
               </label>
               <input
                 type="file"
@@ -374,10 +419,16 @@ function UploadMovie() {
                 accept="video/*"
                 onChange={handleVideoChange}
                 className="file-input"
+                disabled={loading}
               />
               {videoFile && (
                 <p className="file-info">
-                  Selected: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                  ✅ Selected: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                </p>
+              )}
+              {!videoFile && (
+                <p className="file-info" style={{color: '#808080'}}>
+                  No video file selected
                 </p>
               )}
             </div>
@@ -395,6 +446,7 @@ function UploadMovie() {
                 checked={formData.trending}
                 onChange={handleChange}
                 className="checkbox-input"
+                disabled={loading}
               />
               <span>Trending</span>
             </label>
@@ -406,6 +458,7 @@ function UploadMovie() {
                 checked={formData.comingSoon}
                 onChange={handleChange}
                 className="checkbox-input"
+                disabled={loading}
               />
               <span>Coming Soon</span>
             </label>
@@ -417,6 +470,7 @@ function UploadMovie() {
                 checked={formData.featured}
                 onChange={handleChange}
                 className="checkbox-input"
+                disabled={loading}
               />
               <span>Featured</span>
             </label>
@@ -435,7 +489,7 @@ function UploadMovie() {
           <button 
             type="submit" 
             className="btn-primary"
-            disabled={loading}
+            disabled={loading || !videoFile || !thumbnailFile}
           >
             {loading ? (
               <>
