@@ -13,7 +13,7 @@ function UploadMovie() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    genre: 'Action',
+    genres: [], // Changed from genre to genres (array)
     director: '',
     cast: '',
     year: new Date().getFullYear(),
@@ -36,10 +36,20 @@ function UploadMovie() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+    
+    // Handle multiple genre selection
+    if (name === 'genres') {
+      const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+      setFormData({
+        ...formData,
+        genres: selectedOptions
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value
+      });
+    }
     setError('');
   };
 
@@ -118,6 +128,9 @@ function UploadMovie() {
         if (key === 'cast') {
           const castArray = formData[key].split(',').map(s => s.trim()).filter(s => s);
           data.append(key, JSON.stringify(castArray));
+        } else if (key === 'genres') {
+          // Send genres as JSON array
+          data.append(key, JSON.stringify(formData[key]));
         } else {
           data.append(key, formData[key]);
         }
@@ -154,7 +167,7 @@ function UploadMovie() {
     setFormData({
       title: '',
       description: '',
-      genre: 'Action',
+      genres: [], // Reset to empty array
       director: '',
       cast: '',
       year: new Date().getFullYear(),
@@ -222,18 +235,23 @@ function UploadMovie() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="genre">Genre *</label>
+              <label htmlFor="genres">Genres * (Hold Ctrl/Cmd to select multiple)</label>
               <select
-                id="genre"
-                name="genre"
-                value={formData.genre}
+                id="genres"
+                name="genres"
+                value={formData.genres}
                 onChange={handleChange}
                 required
+                multiple
                 className="form-input"
                 disabled={loading}
+                style={{ minHeight: '120px' }}
               >
                 {genres.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
+              <small style={{color: '#b3b3b3', fontSize: '0.875rem'}}>
+                Selected: {formData.genres.length > 0 ? formData.genres.join(', ') : 'None'}
+              </small>
             </div>
           </div>
 
@@ -320,7 +338,7 @@ function UploadMovie() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="rating">Rating (0-5)</label>
+              <label htmlFor="rating">Rating (0-10)</label>
               <input
                 type="number"
                 id="rating"
@@ -328,7 +346,7 @@ function UploadMovie() {
                 value={formData.rating}
                 onChange={handleChange}
                 min="0"
-                max="5"
+                max="10"
                 step="0.1"
                 className="form-input"
                 disabled={loading}
