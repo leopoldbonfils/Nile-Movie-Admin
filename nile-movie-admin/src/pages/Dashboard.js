@@ -21,18 +21,17 @@ function Dashboard() {
     try {
       setLoading(true);
       
-      // Load stats (if endpoint exists, otherwise calculate from movies)
+      // Load stats
       try {
         const statsResponse = await dashboardService.getStats();
         setStats(statsResponse.data);
       } catch (error) {
-        // If stats endpoint doesn't exist, calculate manually
         const moviesResponse = await movieService.getMovies({ limit: 100 });
         const movies = moviesResponse.data || [];
         
         setStats({
           totalMovies: moviesResponse.total || movies.length,
-          totalUsers: 0, // Would need users endpoint
+          totalUsers: 0,
           totalViews: movies.reduce((sum, movie) => sum + (movie.views || 0), 0),
           trendingMovies: movies.filter(m => m.trending).length
         });
@@ -47,6 +46,23 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle image error
+  const handleImageError = (e) => {
+    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="90" viewBox="0 0 60 90"%3E%3Crect width="60" height="90" fill="%23141414"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23808080" font-family="Arial" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';
+  };
+
+  // Get full image URL
+  const getImageUrl = (thumbnailUrl) => {
+    if (!thumbnailUrl) return null;
+    
+    // If it's already a full URL, return it
+    if (thumbnailUrl.startsWith('http')) return thumbnailUrl;
+    
+    // If it starts with /, add the base URL
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    return `${baseUrl}${thumbnailUrl}`;
   };
 
   const statCards = [
@@ -133,14 +149,19 @@ function Dashboard() {
                     <tr key={movie.id}>
                       <td>
                         <img 
-                          src={movie.thumbnailUrl || 'https://via.placeholder.com/60x90'} 
+                          src={getImageUrl(movie.thumbnailUrl)} 
                           alt={movie.title}
                           className="movie-thumb"
+                          onError={handleImageError}
                         />
                       </td>
                       <td className="movie-title-cell">{movie.title}</td>
                       <td>
-                        <span className="genre-badge">{movie.genre}</span>
+                        <span className="genre-badge">
+                          {Array.isArray(movie.genres) && movie.genres.length > 0 
+                            ? movie.genres[0] 
+                            : movie.genre || 'N/A'}
+                        </span>
                       </td>
                       <td>{movie.year}</td>
                       <td>

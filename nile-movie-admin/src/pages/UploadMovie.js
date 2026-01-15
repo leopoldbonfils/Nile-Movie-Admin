@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Film, Image, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, Film, Image, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { movieService } from '../api/services';
 import './UploadMovie.css';
 
@@ -13,7 +13,7 @@ function UploadMovie() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    genres: [], // Changed from genre to genres (array)
+    genres: [],
     director: '',
     cast: '',
     year: new Date().getFullYear(),
@@ -31,36 +31,44 @@ function UploadMovie() {
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
-  const genres = ['Action', 'Horror', 'Romance', 'Sci-Fi', 'Crime', 'Fantasy', 'Comedy', 'War', 'Drama', 'Thriller'];
+  const availableGenres = ['Action', 'Horror', 'Romance', 'Sci-Fi', 'Crime', 'Fantasy', 'Comedy', 'War', 'Drama', 'Thriller'];
   const ageRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    // Handle multiple genre selection
-    if (name === 'genres') {
-      const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-      setFormData({
-        ...formData,
-        genres: selectedOptions
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: type === 'checkbox' ? checked : value
-      });
-    }
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
     setError('');
+  };
+
+  const handleGenreToggle = (genre) => {
+    setFormData(prev => {
+      const isSelected = prev.genres.includes(genre);
+      return {
+        ...prev,
+        genres: isSelected
+          ? prev.genres.filter(g => g !== genre)
+          : [...prev.genres, genre]
+      };
+    });
+  };
+
+  const removeGenre = (genre) => {
+    setFormData(prev => ({
+      ...prev,
+      genres: prev.genres.filter(g => g !== genre)
+    }));
   };
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
-    console.log('Thumbnail selected:', file); // Debug log
     
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         setError('Thumbnail must be less than 5MB');
-        e.target.value = ''; // Clear the input
+        e.target.value = '';
         return;
       }
       
@@ -76,17 +84,15 @@ function UploadMovie() {
 
   const handleVideoChange = (e) => {
     const file = e.target.files[0];
-    console.log('Video selected:', file); // Debug log
     
     if (file) {
-      if (file.size > 10 * 1024 * 1024 * 1024) { // 10GB limit
+      if (file.size > 10 * 1024 * 1024 * 1024) {
         setError('Video must be less than 10GB');
-        e.target.value = ''; // Clear the input
+        e.target.value = '';
         return;
       }
       
       setVideoFile(file);
-      console.log('Video file set:', file.name, file.size); // Debug log
       setError('');
     }
   };
@@ -96,14 +102,14 @@ function UploadMovie() {
     setError('');
     setSuccess('');
 
-    console.log('=== FORM SUBMISSION DEBUG ===');
-    console.log('Form data:', formData);
-    console.log('Thumbnail file:', thumbnailFile);
-    console.log('Video file:', videoFile);
-
     // Validate required fields
     if (!formData.title || !formData.description || !formData.director) {
       setError('Please fill in all required fields (Title, Description, Director)');
+      return;
+    }
+
+    if (formData.genres.length === 0) {
+      setError('Please select at least one genre');
       return;
     }
 
@@ -114,7 +120,6 @@ function UploadMovie() {
 
     if (!videoFile) {
       setError('Please select a video file');
-      console.log('Video file is null or undefined');
       return;
     }
 
@@ -129,7 +134,6 @@ function UploadMovie() {
           const castArray = formData[key].split(',').map(s => s.trim()).filter(s => s);
           data.append(key, JSON.stringify(castArray));
         } else if (key === 'genres') {
-          // Send genres as JSON array
           data.append(key, JSON.stringify(formData[key]));
         } else {
           data.append(key, formData[key]);
@@ -140,17 +144,10 @@ function UploadMovie() {
       data.append('thumbnail', thumbnailFile);
       data.append('video', videoFile);
 
-      console.log('FormData entries:');
-      for (let pair of data.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
-      const response = await movieService.uploadMovie(data);
-      console.log('Upload response:', response);
+      await movieService.uploadMovie(data);
 
       setSuccess('Movie uploaded successfully!');
       
-      // Reset form
       setTimeout(() => {
         navigate('/dashboard/movies');
       }, 2000);
@@ -167,7 +164,7 @@ function UploadMovie() {
     setFormData({
       title: '',
       description: '',
-      genres: [], // Reset to empty array
+      genres: [],
       director: '',
       cast: '',
       year: new Date().getFullYear(),
@@ -186,7 +183,6 @@ function UploadMovie() {
     setError('');
     setSuccess('');
     
-    // Clear file inputs
     const thumbnailInput = document.getElementById('thumbnail');
     const videoInput = document.getElementById('video');
     if (thumbnailInput) thumbnailInput.value = '';
@@ -235,23 +231,47 @@ function UploadMovie() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="genres">Genres * (Hold Ctrl/Cmd to select multiple)</label>
-              <select
-                id="genres"
-                name="genres"
-                value={formData.genres}
-                onChange={handleChange}
-                required
-                multiple
-                className="form-input"
-                disabled={loading}
-                style={{ minHeight: '120px' }}
-              >
-                {genres.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-              <small style={{color: '#b3b3b3', fontSize: '0.875rem'}}>
-                Selected: {formData.genres.length > 0 ? formData.genres.join(', ') : 'None'}
-              </small>
+              <label>Genres * (Click to select/deselect)</label>
+              
+              {/* Selected Genres Display */}
+              {formData.genres.length > 0 && (
+                <div className="selected-genres">
+                  {formData.genres.map(genre => (
+                    <span key={genre} className="genre-chip">
+                      {genre}
+                      <button
+                        type="button"
+                        onClick={() => removeGenre(genre)}
+                        className="genre-chip-remove"
+                        disabled={loading}
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Genre Selection Buttons */}
+              <div className="genre-buttons">
+                {availableGenres.map(genre => (
+                  <button
+                    key={genre}
+                    type="button"
+                    onClick={() => handleGenreToggle(genre)}
+                    className={`genre-button ${formData.genres.includes(genre) ? 'selected' : ''}`}
+                    disabled={loading}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+              
+              {formData.genres.length === 0 && (
+                <small style={{color: '#808080', fontSize: '0.875rem', display: 'block', marginTop: '0.5rem'}}>
+                  No genres selected
+                </small>
+              )}
             </div>
           </div>
 
@@ -507,7 +527,7 @@ function UploadMovie() {
           <button 
             type="submit" 
             className="btn-primary"
-            disabled={loading || !videoFile || !thumbnailFile}
+            disabled={loading || !videoFile || !thumbnailFile || formData.genres.length === 0}
           >
             {loading ? (
               <>
