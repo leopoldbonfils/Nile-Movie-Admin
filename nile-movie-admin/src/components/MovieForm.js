@@ -16,7 +16,12 @@ const MovieForm = ({ onSubmit, initialData = null, loading = false }) => {
     releaseDate: '',
     trending: false,
     comingSoon: false,
-    featured: false
+    featured: false,
+    type: 'movie', // 'movie' or 'series'
+    status: 'released', // 'released' or 'scheduled'
+    scheduledReleaseDate: '',
+    introSkipTime: 0,
+    introSkipDuration: 0
   });
 
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -42,7 +47,12 @@ const MovieForm = ({ onSubmit, initialData = null, loading = false }) => {
         releaseDate: initialData.releaseDate ? new Date(initialData.releaseDate).toISOString().split('T')[0] : '',
         trending: initialData.trending || false,
         comingSoon: initialData.comingSoon || false,
-        featured: initialData.featured || false
+        featured: initialData.featured || false,
+        type: initialData.type || 'movie',
+        status: initialData.status || 'released',
+        scheduledReleaseDate: initialData.scheduledReleaseDate ? new Date(initialData.scheduledReleaseDate).toISOString().slice(0, 16) : '',
+        introSkipTime: initialData.introSkipTime || 0,
+        introSkipDuration: initialData.introSkipDuration || 0
       });
       
       if (initialData.thumbnailUrl) {
@@ -266,7 +276,7 @@ const MovieForm = ({ onSubmit, initialData = null, loading = false }) => {
 
         {/* Release Date */}
         <div className="form-group">
-          <label htmlFor="releaseDate">Release Date *</label>
+          <label htmlFor="releaseDate">Original Release Date *</label>
           <input
             type="date"
             id="releaseDate"
@@ -274,6 +284,78 @@ const MovieForm = ({ onSubmit, initialData = null, loading = false }) => {
             value={formData.releaseDate}
             onChange={handleChange}
             required
+            disabled={loading}
+          />
+        </div>
+
+        {/* Content Type */}
+        <div className="form-group">
+          <label htmlFor="type">Content Type</label>
+          <select
+            id="type"
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            disabled={loading}
+          >
+            <option value="movie">Movie</option>
+            <option value="series">TV Series</option>
+          </select>
+        </div>
+
+        {/* Status (Scheduling) */}
+        <div className="form-group">
+          <label htmlFor="status">Release Status</label>
+          <select
+            id="status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            disabled={loading}
+          >
+            <option value="released">Released Immediately</option>
+            <option value="scheduled">Scheduled Release</option>
+          </select>
+        </div>
+
+        {formData.status === 'scheduled' && (
+          <div className="form-group">
+            <label htmlFor="scheduledReleaseDate">Scheduled Date & Time *</label>
+            <input
+              type="datetime-local"
+              id="scheduledReleaseDate"
+              name="scheduledReleaseDate"
+              value={formData.scheduledReleaseDate}
+              onChange={handleChange}
+              required={formData.status === 'scheduled'}
+              disabled={loading}
+            />
+          </div>
+        )}
+
+        {/* Skip Intro Fields */}
+        <div className="form-group">
+          <label htmlFor="introSkipTime">Intro Start Time (sec)</label>
+          <input
+            type="number"
+            id="introSkipTime"
+            name="introSkipTime"
+            value={formData.introSkipTime}
+            onChange={handleChange}
+            min="0"
+            disabled={loading}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="introSkipDuration">Intro Duration (sec)</label>
+          <input
+            type="number"
+            id="introSkipDuration"
+            name="introSkipDuration"
+            value={formData.introSkipDuration}
+            onChange={handleChange}
+            min="0"
             disabled={loading}
           />
         </div>
@@ -304,14 +386,14 @@ const MovieForm = ({ onSubmit, initialData = null, loading = false }) => {
 
         {/* Video Upload */}
         <div className="form-group full-width">
-          <label htmlFor="video">Video File {!initialData && '*'}</label>
+          <label htmlFor="video">Video File {!initialData && formData.type === 'movie' ? '*' : '(Optional for Series)'}</label>
           <div className="file-upload-area">
             <input
               type="file"
               id="video"
               accept="video/*"
               onChange={handleVideoChange}
-              required={!initialData}
+              required={!initialData && formData.type === 'movie'}
               disabled={loading}
             />
             <div className="file-upload-label">

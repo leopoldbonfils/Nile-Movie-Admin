@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Edit, Trash2, Eye, EyeOff, Search } from 'lucide-react';
+import { Film, Edit, Trash2, Eye, EyeOff, Search, List as ListIcon } from 'lucide-react';
 import { movieService } from '../api/services';
 import './MoviesList.css';
 
@@ -148,6 +148,13 @@ function MoviesList() {
                       title={movie.isActive ? 'Deactivate' : 'Activate'}
                     >
                       {movie.isActive ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/dashboard/episodes/${movie.id}`)}
+                      className="action-btn"
+                      title="Manage Episodes"
+                    >
+                      <ListIcon size={18} />
                     </button>
                     <button 
                       onClick={() => handleDelete(movie.id, movie.title)}

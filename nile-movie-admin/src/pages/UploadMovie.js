@@ -21,10 +21,14 @@ function UploadMovie() {
     rating: '0',
     ageRating: 'PG-13',
     language: 'English',
-    trending: false,
     comingSoon: false,
     featured: false,
-    releaseDate: ''
+    releaseDate: '',
+    type: 'movie',
+    status: 'released',
+    scheduledReleaseDate: '',
+    introSkipTime: 0,
+    introSkipDuration: 0
   });
 
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -118,8 +122,13 @@ function UploadMovie() {
       return;
     }
 
-    if (!videoFile) {
+    if (!videoFile && formData.type === 'movie') {
       setError('Please select a video file');
+      return;
+    }
+
+    if (formData.status === 'scheduled' && !formData.scheduledReleaseDate) {
+      setError('Please set a scheduled release date');
       return;
     }
 
@@ -175,7 +184,12 @@ function UploadMovie() {
       trending: false,
       comingSoon: false,
       featured: false,
-      releaseDate: ''
+      releaseDate: '',
+      type: 'movie',
+      status: 'released',
+      scheduledReleaseDate: '',
+      introSkipTime: 0,
+      introSkipDuration: 0
     });
     setThumbnailFile(null);
     setVideoFile(null);
@@ -405,7 +419,7 @@ function UploadMovie() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="releaseDate">Release Date</label>
+              <label htmlFor="releaseDate">Original Release Date</label>
               <input
                 type="date"
                 id="releaseDate"
@@ -416,6 +430,85 @@ function UploadMovie() {
                 disabled={loading}
               />
             </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="type">Content Type</label>
+              <select
+                id="type"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="form-input"
+                disabled={loading}
+              >
+                <option value="movie">Movie</option>
+                <option value="series">TV Series</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="status">Release Status</label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="form-input"
+                disabled={loading}
+              >
+                <option value="released">Released Immediately</option>
+                <option value="scheduled">Scheduled Release</option>
+              </select>
+            </div>
+
+            {formData.status === 'scheduled' ? (
+              <div className="form-group">
+                <label htmlFor="scheduledReleaseDate">Scheduled Date & Time *</label>
+                <input
+                  type="datetime-local"
+                  id="scheduledReleaseDate"
+                  name="scheduledReleaseDate"
+                  value={formData.scheduledReleaseDate}
+                  onChange={handleChange}
+                  required={formData.status === 'scheduled'}
+                  className="form-input"
+                  disabled={loading}
+                />
+              </div>
+            ) : <div className="form-group" />}
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="introSkipTime">Intro Start Time (sec)</label>
+              <input
+                type="number"
+                id="introSkipTime"
+                name="introSkipTime"
+                value={formData.introSkipTime}
+                onChange={handleChange}
+                min="0"
+                className="form-input"
+                disabled={loading}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="introSkipDuration">Intro Duration (sec)</label>
+              <input
+                type="number"
+                id="introSkipDuration"
+                name="introSkipDuration"
+                value={formData.introSkipDuration}
+                onChange={handleChange}
+                min="0"
+                className="form-input"
+                disabled={loading}
+              />
+            </div>
+            <div className="form-group" />
           </div>
         </div>
 
@@ -449,7 +542,7 @@ function UploadMovie() {
             <div className="form-group file-upload-group">
               <label htmlFor="video">
                 <Film size={20} />
-                Video File * (Max 10GB)
+                Video File {formData.type === 'movie' ? '*' : '(Optional for Series)'} (Max 10GB)
               </label>
               <input
                 type="file"
@@ -527,7 +620,7 @@ function UploadMovie() {
           <button 
             type="submit" 
             className="btn-primary"
-            disabled={loading || !videoFile || !thumbnailFile || formData.genres.length === 0}
+            disabled={loading || (formData.type === 'movie' && !videoFile) || !thumbnailFile || formData.genres.length === 0}
           >
             {loading ? (
               <>
