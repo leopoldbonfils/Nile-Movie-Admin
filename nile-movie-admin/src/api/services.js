@@ -76,6 +76,34 @@ export const movieService = {
   toggleStatus: async (id) => {
     const response = await apiClient.patch(`/admin/movies/${id}/toggle-status`);
     return response.data;
+  },
+
+  // Get seasons
+  getSeasons: async (movieId) => {
+    const response = await apiClient.get(`/movies/${movieId}/seasons`);
+    return response.data;
+  },
+
+  // Get episodes
+  getSeasonEpisodes: async (movieId, seasonId) => {
+    const response = await apiClient.get(`/movies/${movieId}/seasons/${seasonId}/episodes`);
+    return response.data;
+  },
+
+  // Create season
+  createSeason: async (movieId, seasonData) => {
+    const response = await apiClient.post(`/admin/movies/${movieId}/seasons`, seasonData);
+    return response.data;
+  },
+
+  // Create episode
+  createEpisode: async (movieId, seasonId, formData) => {
+    const response = await apiClient.post(`/admin/movies/${movieId}/seasons/${seasonId}/episodes`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 };
 

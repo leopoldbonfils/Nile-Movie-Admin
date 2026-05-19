@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UploadMovie from './pages/UploadMovie';
 import MoviesList from './pages/MoviesList';
+import ManageEpisodes from './pages/ManageEpisodes';
 import './App.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="upload" element={<UploadMovie />} />
             <Route path="movies" element={<MoviesList />} />
+            <Route path="episodes/:id" element={<ManageEpisodes />} />
           </Route>
 
           {/* Redirect root to dashboard */}
