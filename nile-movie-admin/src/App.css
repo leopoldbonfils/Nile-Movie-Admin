@@ -1,16 +1,16 @@
 :root {
-  --primary-blue: #00bfff;
-  --dark-blue: #076bb2;
-  --light-blue: #06c8f4;
-  --bg-black: #000000;
-  --bg-dark: #0a0a0a;
-  --bg-gray: #141414;
-  --bg-gray-light: #1a1a1a;
-  --text-white: #ffffff;
-  --text-gray: #b3b3b3;
-  --text-dim: #808080;
-  --success-green: #16a34a;
-  --danger-red: #dc2626;
+  --primary-blue: #00A8FF;
+  --dark-blue: #0077CC;
+  --light-blue: #E6F6FF;
+  --bg-black: #0D1B2A;
+  --bg-dark: #102336;
+  --bg-gray: #152B42;
+  --bg-gray-light: #1D3A57;
+  --text-white: #FFFFFF;
+  --text-gray: #AAB7C4;
+  --text-dim: #7B90A5;
+  --success-green: #2ecc71;
+  --danger-red: #dc2626; /* Only keep for critical destructive actions */
   --warning-yellow: #fbbf24;
   --border-color: rgba(255, 255, 255, 0.1);
 }
