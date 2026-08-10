@@ -33,6 +33,7 @@ function UploadMovie() {
 
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [videoFile, setVideoFile] = useState(null);
+  const [trailerFile, setTrailerFile] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
   const availableGenres = ['Action', 'Horror', 'Romance', 'Sci-Fi', 'Crime', 'Fantasy', 'Comedy', 'War', 'Drama', 'Thriller'];
@@ -101,6 +102,21 @@ function UploadMovie() {
     }
   };
 
+  const handleTrailerChange = (e) => {
+    const file = e.target.files[0];
+    
+    if (file) {
+      if (file.size > 2 * 1024 * 1024 * 1024) {
+        setError('Trailer must be less than 2GB');
+        e.target.value = '';
+        return;
+      }
+      
+      setTrailerFile(file);
+      setError('');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -122,13 +138,13 @@ function UploadMovie() {
       return;
     }
 
-    if (!videoFile && formData.type === 'movie') {
+    if (!videoFile && formData.type === 'movie' && !formData.comingSoon) {
       setError('Please select a video file');
       return;
     }
 
-    if (formData.status === 'scheduled' && !formData.scheduledReleaseDate) {
-      setError('Please set a scheduled release date');
+    if (formData.comingSoon && !formData.releaseDate) {
+      setError('Please set a release date for Coming Soon movies');
       return;
     }
 
@@ -150,8 +166,9 @@ function UploadMovie() {
       });
 
       // Append files
-      data.append('thumbnail', thumbnailFile);
-      data.append('video', videoFile);
+      if (thumbnailFile) data.append('thumbnail', thumbnailFile);
+      if (videoFile) data.append('video', videoFile);
+      if (trailerFile) data.append('trailer', trailerFile);
 
       await movieService.uploadMovie(data);
 
@@ -542,7 +559,7 @@ function UploadMovie() {
             <div className="form-group file-upload-group">
               <label htmlFor="video">
                 <Film size={20} />
-                Video File {formData.type === 'movie' ? '*' : '(Optional for Series)'} (Max 10GB)
+                Video File {formData.type === 'movie' && !formData.comingSoon ? '*' : '(Optional for Coming Soon / Series)'} (Max 10GB)
               </label>
               <input
                 type="file"
@@ -563,11 +580,39 @@ function UploadMovie() {
                 </p>
               )}
             </div>
+
+            <div className="form-group file-upload-group">
+              <label htmlFor="trailer">
+                <Film size={20} />
+                Trailer File (Optional / For Coming Soon) (Max 2GB)
+              </label>
+              <input
+                type="file"
+                id="trailer"
+                accept="video/*"
+                onChange={handleTrailerChange}
+                className="file-input"
+                disabled={loading}
+              />
+              {trailerFile && (
+                <p className="file-info">
+                  ✅ Selected: {trailerFile.name} ({(trailerFile.size / (1024 * 1024)).toFixed(2)} MB)
+                </p>
+              )}
+              {!trailerFile && (
+                <p className="file-info" style={{color: '#808080'}}>
+                  No trailer file selected
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="form-section">
-          <h2 className="section-title">Status Flags</h2>
+          <h2 className="section-title">Movie Category & Display Section</h2>
+          <p style={{ color: '#8E8E93', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Specify which sections this movie should appear in across the Web and Mobile app.
+          </p>
           
           <div className="checkbox-group">
             <label className="checkbox-label">
@@ -579,7 +624,7 @@ function UploadMovie() {
                 className="checkbox-input"
                 disabled={loading}
               />
-              <span>Trending</span>
+              <span>🔥 Trending Section</span>
             </label>
 
             <label className="checkbox-label">
@@ -591,7 +636,7 @@ function UploadMovie() {
                 className="checkbox-input"
                 disabled={loading}
               />
-              <span>Coming Soon</span>
+              <span>⏳ Coming Soon Section (Locked until Release Date)</span>
             </label>
 
             <label className="checkbox-label">
@@ -603,7 +648,7 @@ function UploadMovie() {
                 className="checkbox-input"
                 disabled={loading}
               />
-              <span>Featured</span>
+              <span>⭐ Featured Section & Hero Banner</span>
             </label>
           </div>
         </div>
@@ -620,7 +665,7 @@ function UploadMovie() {
           <button 
             type="submit" 
             className="btn-primary"
-            disabled={loading || (formData.type === 'movie' && !videoFile) || !thumbnailFile || formData.genres.length === 0}
+            disabled={loading || (!formData.comingSoon && formData.type === 'movie' && !videoFile) || !thumbnailFile || formData.genres.length === 0}
           >
             {loading ? (
               <>

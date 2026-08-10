@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-// API Base URL - NO /api prefix for admin routes
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// API Base URL - with /api prefix for all routes
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000') + '/api';
 
-// Create axios instance WITHOUT /api prefix
+// Create axios instance WITH /api prefix
 const apiClient = axios.create({
-  baseURL: API_BASE_URL, // This will be just http://localhost:5000
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
